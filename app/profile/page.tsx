@@ -36,13 +36,15 @@ export default function Profile() {
   if (!confirmDelete) return;
 
   try {
-    // 1. Storage se Photo delete karo
-    // Image URL se file ka naam nikalne ke liye:
-    const fileName = imageUrl.split('/').pop(); 
+    // 1. Storage se Photo delete karo (URL se filename nikal kar)
+    const urlParts = imageUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1];
+    
     if (fileName) {
-      await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from('item-images')
         .remove([fileName]);
+      if (storageError) console.error("Storage error:", storageError);
     }
 
     // 2. Database se Row delete karo
@@ -55,7 +57,7 @@ export default function Profile() {
 
     // 3. UI Update
     setMyItems(myItems.filter(item => item.id !== id));
-    alert("Ad aur Photo dono delete ho gaye! ✅");
+    alert("Ad aur Photo dono safaya ho gaye! 🗑️✅");
 
   } catch (err: any) {
     alert("Error: " + err.message);
