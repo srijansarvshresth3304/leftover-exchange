@@ -48,7 +48,7 @@ export default function Profile() {
   }, [router]);
 
   const handleDelete = async (id: string, imageUrl: string) => {
-    if (!confirm("Bhai, pakka ad delete karna hai?")) return;
+    if (!confirm("Bhai, pakka ad hatana hai? Photo aur data dono ud jayenge.")) return;
     try {
       if (imageUrl) {
         const fileName = imageUrl.split('/').pop();
@@ -56,6 +56,7 @@ export default function Profile() {
       }
       await supabase.from("items").delete().eq("id", id);
       setMyItems(prev => prev.filter(item => item.id !== id));
+      alert("Ad Safaya! 🗑️");
     } catch (err: any) { alert(err.message); }
   };
 
@@ -83,36 +84,35 @@ export default function Profile() {
             <p className="text-white/40 font-medium tracking-[0.3em] text-[10px] uppercase mt-2 bg-white/5 inline-block px-3 py-1 rounded-full border border-white/10">{user?.email}</p>
           </header>
 
-          {myItems.length === 0 ? (
-            <div className="text-center py-20 bg-white/5 rounded-[3rem] border border-white/10 backdrop-blur-md">
-              <p className="text-2xl font-black mb-8 opacity-40">Bhai, abhi tak kuch becha nahi? 🤔</p>
-              <button onClick={() => router.push("/post-item")} className="bg-orange-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 transition-all shadow-xl shadow-orange-600/20">+ Post Your First Ad</button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {myItems.map((item) => (
-                <div key={item.id} className="group relative bg-white/5 border border-white/10 backdrop-blur-md rounded-[2.5rem] overflow-hidden shadow-xl">
-                  <div className="h-48 overflow-hidden relative">
-                    <img 
-                      src={item.image_url || "https://placehold.co/600x400/111/orange?text=No+Photo"} 
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all"
-                      onError={(e) => (e.currentTarget.src = "https://placehold.co/600x400/111/orange?text=No+Photo")} 
-                    />
-                  </div>
-                  <div className="p-8">
-                    <h3 className="text-xl font-black uppercase truncate mb-4">{item.title}</h3>
-                    <p className="text-2xl font-black text-orange-500 mb-6 italic">₹{item.price}</p>
-                    <button 
-                      onClick={() => handleDelete(item.id, item.image_url)}
-                      className="w-full bg-red-600/10 text-red-500 border border-red-500/20 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all"
-                    >
-                      Delete Ad Permanently 🗑️
-                    </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {myItems.map((item) => (
+              <div key={item.id} className="group bg-white/5 border border-white/10 backdrop-blur-md rounded-[2.5rem] overflow-hidden shadow-xl">
+                <div className="h-48 overflow-hidden relative">
+                  <img 
+                    src={item.image_url || "https://placehold.co/600x400/111/orange?text=No+Photo"} 
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all"
+                    onError={(e) => (e.currentTarget.src = "https://placehold.co/600x400/111/orange?text=No+Photo")} 
+                  />
+                  <div className="absolute bottom-4 left-4 flex gap-2">
+                    <span className="bg-black/80 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase border border-white/10">Qty: {item.quantity}</span>
+                    <span className="bg-black/80 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase border border-white/10">PIN: {item.pincode}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="p-8">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-black uppercase truncate mr-2">{item.title}</h3>
+                    <p className="text-xl font-black text-orange-500 italic">₹{item.price}</p>
+                  </div>
+                  <button 
+                    onClick={() => handleDelete(item.id, item.image_url)}
+                    className="w-full bg-red-600/10 text-red-500 border border-red-500/20 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                  >
+                    Delete Ad Permanently 🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </main>

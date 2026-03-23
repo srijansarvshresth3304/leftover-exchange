@@ -53,7 +53,9 @@ export default function Home() {
     if (!items) return;
     let result = items.filter(item => 
       (activeCategory === "All" || item.category === activeCategory) &&
-      (item.title.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase()))
+      (item.title.toLowerCase().includes(search.toLowerCase()) || 
+       item.description.toLowerCase().includes(search.toLowerCase()) ||
+       (item.pincode && item.pincode.includes(search)))
     );
     setFilteredItems(result);
   }, [search, activeCategory, items]);
@@ -76,7 +78,7 @@ export default function Home() {
             L.E. MARKET
           </h1>
           <div className="flex gap-4">
-            <button onClick={() => router.push("/profile")} className="text-[10px] font-bold uppercase tracking-widest px-5 py-2 rounded-full border border-white/20 hover:bg-white/10 transition-all shadow-lg">Profile 👷‍♂️</button>
+            <button onClick={() => router.push("/profile")} className="text-[10px] font-bold uppercase tracking-widest px-5 py-2 rounded-full border border-white/20 hover:bg-white/10 transition-all">Profile 👷‍♂️</button>
             <button onClick={() => router.push("/post-item")} className="text-[10px] font-bold uppercase tracking-widest bg-orange-600 px-5 py-2 rounded-full hover:shadow-[0_0_20px_rgba(234,88,12,0.5)] transition-all">Sell Now +</button>
           </div>
         </nav>
@@ -85,12 +87,12 @@ export default function Home() {
           <h2 className="text-5xl md:text-8xl font-black mb-4 tracking-tighter uppercase leading-none">
             Build Faster.<br /><span className="text-orange-500">Buy Direct.</span>
           </h2>
-          <p className="text-white/40 font-medium tracking-[0.3em] text-[10px] uppercase mb-12">Bihar's Premium Construction Hub</p>
+          <p className="text-white/40 font-medium tracking-[0.3em] text-[10px] uppercase mb-12 text-center">Bihar's Premium Construction Hub</p>
           
           <div className="max-w-3xl mx-auto relative group">
             <input 
               type="text" 
-              placeholder="Sariya, Cement, Tiles..."
+              placeholder="Search Sariya, Cement, PIN..."
               className="w-full bg-white/5 border border-white/10 backdrop-blur-2xl p-6 rounded-3xl text-xl font-bold outline-none focus:border-orange-500/50 transition-all shadow-2xl"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -126,13 +128,25 @@ export default function Home() {
                 </div>
 
                 <div className="p-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-black uppercase tracking-tight truncate flex-1 mr-4">{item.title}</h3>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1 mr-4">
+                      <h3 className="text-xl font-black uppercase tracking-tight truncate">{item.title}</h3>
+                      <div className="flex gap-3 mt-1">
+                        <span className="text-[9px] font-bold bg-orange-600/10 text-orange-500 px-2 py-0.5 rounded uppercase tracking-widest border border-orange-500/20">
+                          Qty: {item.quantity || "N/A"}
+                        </span>
+                        <span className="text-[9px] font-bold bg-white/5 text-white/40 px-2 py-0.5 rounded uppercase tracking-widest border border-white/10">
+                          📍 {item.pincode || "Bihar"}
+                        </span>
+                      </div>
+                    </div>
                     <p className="text-2xl font-black text-orange-500 italic">₹{item.price}</p>
                   </div>
+                  
                   <p className="text-white/40 text-xs font-medium italic line-clamp-2 mb-8 leading-relaxed">"{item.description}"</p>
+                  
                   <a 
-                    href={`https://wa.me/${item.seller_phone}?text=Bhai, I want to buy ${item.title}`}
+                    href={`https://wa.me/${item.seller_phone}?text=Bhai, I am interested in ${item.title} (Qty: ${item.quantity}) at ₹${item.price}. PIN: ${item.pincode}`}
                     target="_blank"
                     className="block w-full bg-white text-black text-center py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-orange-600 hover:text-white transition-all shadow-lg"
                   >
@@ -142,9 +156,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-          {filteredItems.length === 0 && (
-            <div className="text-center py-20 opacity-20"><p className="text-4xl font-black italic">NO STOCK FOUND 📦</p></div>
-          )}
         </section>
       </div>
     </main>
