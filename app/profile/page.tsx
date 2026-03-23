@@ -3,66 +3,93 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-export default function ProfilePage() {
-  const [profile, setProfile] = useState<any>(null);
-  const [fullName, setFullName] = useState("");
-  const [bio, setBio] = useState("");
-  const [city, setCity] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function Profile() {
+  const [myItems, setMyItems] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const getUserAndItems = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return router.push("/login");
-
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-      if (data) {
-        setProfile(data);
-        setFullName(data.full_name || "");
-        setBio(data.bio || "");
-        setCity(data.location_city || "");
+      if (!user) {
+        router.push("/login");
+        return;
       }
+      setUser(user);
+
+      // Sirf is user ke items fetch karo
+      const { data, error } = await supabase
+        .from("items")
+        .select("*")
+        .eq("seller_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (data) setMyItems(data);
+      setLoading(false);
     };
-    fetchProfile();
+    getUserAndItems();
   }, [router]);
 
-  const updateProfile = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("profiles").update({
-      full_name: fullName,
-      bio: bio,
-      location_city: city
-    }).eq("id", user?.id);
+  const handleDelete = async (id: string, imageUrl: string) => {
+    const confirmDelete = confirm("Kya aap pakka is ad ko hatana chahte hain?");
+    if (!confirmDelete) return;
 
-    if (error) alert(error.message);
-    else alert("Profile Update Ho Gayi! ✅");
-    setLoading(false);
+    try {
+      // 1. Database se delete karo
+      const { error: dbError } = await supabase
+        .from("items")
+        .delete()
+        .eq("id", id);
+
+      if (dbError) throw dbError;
+
+      // 2. UI se turant hatao
+      setMyItems(myItems.filter(item => item.id !== id));
+      alert("Ad delete ho gaya! ✅");
+
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
   };
 
-  if (!profile) return <div className="p-20 text-center font-bold">Loading Profile...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center font-black">Loading Profile... 🏗️</div>;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] p-6 flex items-center justify-center">
-      <div className="max-w-xl w-full bg-white rounded-[3rem] shadow-2xl p-10 border border-slate-100">
-        <div className="text-center mb-8">
-          <div className="w-24 h-24 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-4 border-4 border-white shadow-lg">
-            {fullName[0] || "U"}
+    <main className="min-h-screen bg-[#F8FAFC] p-6 pb-20">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-4xl font-black text-slate-800 italic tracking-tighter">MY ADS 👷‍♂️</h1>
+            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">Aapne ab tak kitna saaman list kiya hai</p>
           </div>
-          <h2 className="text-2xl font-black text-slate-800">Apni Pehchaan Banayein</h2>
-          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Trust Points: ⭐️ {profile.trust_points}</p>
+          <button onClick={() => supabase.auth.signOut().then(() => router.push("/"))} className="bg-slate-200 text-slate-600 px-6 py-3 rounded-2xl font-black text-xs uppercase hover:bg-red-50 hover:text-red-600 transition-all">Logout 🚪</button>
         </div>
 
-        <div className="space-y-6">
-          <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Poora Naam" className="w-full p-5 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-orange-500 font-bold" />
-          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Sheher (e.g. Patna, Bihar)" className="w-full p-5 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-orange-500 font-bold" />
-          <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Apne baare mein batayein (e.g. 10 saal ka experience as a Mason)" className="w-full p-5 bg-slate-50 rounded-2xl outline-none focus:ring-2 ring-orange-500 font-medium h-32" />
-          
-          <button onClick={updateProfile} disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg shadow-xl hover:bg-black transition-all active:scale-95">
-            {loading ? "SAVING..." : "UPDATE PROFILE ✅"}
-          </button>
-        </div>
+        {myItems.length === 0 ? (
+          <div className="bg-white rounded-[3rem] p-20 text-center border-4 border-dashed border-slate-100">
+            <p className="text-slate-400 font-black text-xl mb-4 text-center">Bhai, abhi tak kuch becha nahi? 🤔</p>
+            <a href="/post-item" className="text-orange-600 font-black uppercase tracking-widest text-sm hover:underline">+ Pehla ad dalo</a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {myItems.map((item) => (
+              <div key={item.id} className="bg-white rounded-[2.5rem] p-4 shadow-xl border border-slate-100 flex gap-4 items-center group">
+                <img src={item.image_url} className="w-24 h-24 rounded-[1.5rem] object-cover" />
+                <div className="flex-grow">
+                  <h3 className="font-black text-slate-800 text-lg leading-tight mb-1">{item.title}</h3>
+                  <p className="text-orange-600 font-black text-sm mb-3 italic">₹{item.price}</p>
+                  <button 
+                    onClick={() => handleDelete(item.id, item.image_url)}
+                    className="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                  >
+                    Delete Ad 🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
