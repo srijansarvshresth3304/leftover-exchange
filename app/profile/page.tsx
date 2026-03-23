@@ -32,26 +32,35 @@ export default function Profile() {
   }, [router]);
 
   const handleDelete = async (id: string, imageUrl: string) => {
-    const confirmDelete = confirm("Kya aap pakka is ad ko hatana chahte hain?");
-    if (!confirmDelete) return;
+  const confirmDelete = confirm("Kya aap pakka is ad ko hatana chahte hain?");
+  if (!confirmDelete) return;
 
-    try {
-      // 1. Database se delete karo
-      const { error: dbError } = await supabase
-        .from("items")
-        .delete()
-        .eq("id", id);
-
-      if (dbError) throw dbError;
-
-      // 2. UI se turant hatao
-      setMyItems(myItems.filter(item => item.id !== id));
-      alert("Ad delete ho gaya! ✅");
-
-    } catch (err: any) {
-      alert("Error: " + err.message);
+  try {
+    // 1. Storage se Photo delete karo
+    // Image URL se file ka naam nikalne ke liye:
+    const fileName = imageUrl.split('/').pop(); 
+    if (fileName) {
+      await supabase.storage
+        .from('item-images')
+        .remove([fileName]);
     }
-  };
+
+    // 2. Database se Row delete karo
+    const { error: dbError } = await supabase
+      .from("items")
+      .delete()
+      .eq("id", id);
+
+    if (dbError) throw dbError;
+
+    // 3. UI Update
+    setMyItems(myItems.filter(item => item.id !== id));
+    alert("Ad aur Photo dono delete ho gaye! ✅");
+
+  } catch (err: any) {
+    alert("Error: " + err.message);
+  }
+};
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black">Loading Profile... 🏗️</div>;
 
