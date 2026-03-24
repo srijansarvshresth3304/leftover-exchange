@@ -54,7 +54,7 @@ export default function Home() {
     let result = items.filter(item => 
       (activeCategory === "All" || item.category === activeCategory) &&
       (item.title.toLowerCase().includes(search.toLowerCase()) || 
-       item.description.toLowerCase().includes(search.toLowerCase()) ||
+       (item.description && item.description.toLowerCase().includes(search.toLowerCase())) ||
        (item.pincode && item.pincode.includes(search)))
     );
     setFilteredItems(result);
@@ -143,10 +143,12 @@ export default function Home() {
                     <p className="text-2xl font-black text-orange-500 italic">₹{item.price}</p>
                   </div>
                   
-                  <p className="text-white/40 text-xs font-medium italic line-clamp-2 mb-8 leading-relaxed">"{item.description}"</p>
+                  <p className="text-white/40 text-xs font-medium italic line-clamp-2 mb-8 leading-relaxed">
+                    {item.description ? item.description : "No description provided."}
+                  </p>
                   
                   <a 
-                    href={`https://wa.me/${item.seller_phone}?text=Bhai, I am interested in ${item.title} (Qty: ${item.quantity}) at ₹${item.price}. PIN: ${item.pincode}`}
+                    href={`https://wa.me/${item.seller_phone || item.whatsapp_number}?text=Bhai, I am interested in ${item.title} (Qty: ${item.quantity}) at ₹${item.price}. PIN: ${item.pincode}`}
                     target="_blank"
                     className="block w-full bg-white text-black text-center py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-orange-600 hover:text-white transition-all shadow-lg"
                   >
